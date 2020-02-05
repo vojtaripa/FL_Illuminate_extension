@@ -1,0 +1,732 @@
+// ==UserScript==
+// @name         Group Tickets
+// @namespace    http://tampermonkey.net/
+// @version      0.2
+// @description  Adds a column for Tech name and sorts rows by Tech, V3 fixing broken search by downgrading all code to old JQuery version that is compatible with that search, also fixed CAP Tech names. Adding Tech Andrew and removing auto select.., Adding EXPEDITE Tech, adding NOC SPEC Tech (v.8)
+// @author       Vojta Ripa
+// @include      *illuminate.firstlight.systems/illuminate/ticketing/listing*
+// @grant        none
+// @require      https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js
+// ==/UserScript==
+
+/*
+TODO:
+-DROPDOWN WORKS!
+-clicking Tech WORKS!
+
+-Remove Expedite..
+-(DONE) LOOK AT LINE 186 need to omit first row / search row...
+-get time working...
+
+-(DONE)click the Tech name to sort
+-make table headers stick, and only move body / tickets, keep headers where they are
+-Make count of P1, P2 and P3 under the description/ summary other functions with this..?
+-add line numbers
+-replace all pleoples names with Tech names
+-span all lines (rows) with totals
+-add rest of code and make it work
+-need to build auto refresh every min ( and timer count down )
+
+COLORS:
+- blue light: #2a6180
+- Green bright: #badc14
+- blue dark: #053c5b
+- very light green: #f6f9de
+- very light blue: #e5f1f5
+
+#6B5B95
+#7F4145
+#3F69AA
+#D5AE41
+#766F57
+#E47A2E
+#BE9EC9
+
+
+TECH NAMES: (translations)
+- Leo Urena - Urena
+- Leo Goldberg - Goldberg
+- Andrew Sipple - sierra
+- Joseph Curran - Joe
+- Mike Papoutsy - Mike
+- Bob Grimard - Bob
+- Dalton Carney - foxtrot
+- William Dileo (bill) - tango
+- Vojta - whiskey
+- none - none
+- Jeff - noc-spec
+
+*/
+
+//need to define jQuery
+var $ = window.jQuery;
+
+//black background:
+$("body").css("background-color","#2a6180");
+//Adding Directly++ up top
+//$("<br><center><h1 id='directly'>Directly++</h1></center><br><center><div id='newLine'></div></center>").appendTo("#masthead");
+
+$("#ctl00_ContentPlaceHolder1_rgTicketListing_ctl00").wrap("<div id='mycontainer' style='height:700px;overflow:auto;background-color:#badc14;'></div>");
+
+
+//Setting variables.
+var $tabRows = 0;
+var $countW = 0;
+var $countF= 0;
+var $countT = 0;
+var $countS = 0;
+var $Urena = 0;
+var $Goldberg= 0;
+var $Joe = 0;
+var $Mike = 0;
+var $Bob = 0;
+var $countNONE = 0;
+var $total = 0;
+var $expedite = 0;
+var $NocSpec = 0;
+
+//EXECUTE:
+//running function on each table.
+
+
+$( document ).ready(function() {
+
+    //Main function that adds new column of Tech names and table with totals
+function setRows($tableName)
+{
+
+    //for each row in the table given..
+    //first row make header.
+    $("#"+$tableName+" tr:not(:first)").each(function() //tr:gt(2)
+    {
+
+        if ($tabRows == 0) {
+            //gets all table data and create a new row
+            var $tds = $(this).children(),
+                $row = $("<td class='Tech' id='Techs'></td>").css("font-weight","Bold");
+            //setting Tech header;
+            var $Tech = "! Tech !";
+            //adding it to header
+            $row.append($Tech).on("click",
+
+
+                //sorting function, by clicking header, sorting by Tech name given the table ID.
+                function sortTable()
+                {
+                //var $ = window.jQuery;
+
+                //alert("The paragraph was clicked. " + $tableName +"...");
+                var $table= $rows=$switching= $i= $x= $y= $shouldSwitch= $dir = 0;
+                var $switchcount =0;
+                var $n = 14;
+                $table = document.getElementById($tableName);
+                var $switching = true;
+                //Set the sorting direction to ascending:
+                var $dir = "asc";
+                /*Make a loop that will continue until no switching has been done:*/
+                while ($switching)
+                {
+                    //start by saying: no switching is done:
+                    $switching = false;
+                    var $rows = $table.getElementsByTagName("TR");
+                    /*Loop through all table rows (except the first, which contains table headers):*/
+                    for (var $i = 2; $i < ($rows.length - 1); $i++) {
+                        //start by saying there should be no switching:
+                        var $shouldSwitch = false;
+                        /*Get the two elements you want to compare, one from current row and one from the next:*/
+                        var $x = $rows[$i].getElementsByTagName("TD")[$n];
+                        var $y = $rows[$i + 1].getElementsByTagName("TD")[$n];
+                        /*check if the two rows should switch place, based on the direction, asc or desc:*/
+
+                        //DOESNT WORK, but leaving in place anyway.. fix was to start "i" in loop at 2 not 1
+                        if ($x.innerHTML.toLowerCase()=="! Tech !") // name == ! Tech ! then ommit...
+                            {
+                                alert($x.innerHTML.toLowerCase());
+                                $shouldSwitch = false;
+                                break;
+                            }
+
+
+                        else if ($dir == "asc") {
+                            if ($x.innerHTML.toLowerCase() > $y.innerHTML.toLowerCase()) {
+                                //if so, mark as a switch and break the loop:
+                                $shouldSwitch = true;
+                                break;
+                            }
+                        }
+                        else if ($dir == "desc") {
+                            if ($x.innerHTML.toLowerCase() < $y.innerHTML.toLowerCase()) {
+                                //if so, mark as a switch and break the loop:
+                                $shouldSwitch = true;
+                                break;
+                            }
+                        }
+                    }
+                    if ($shouldSwitch) {
+
+                        /*If a switch has been marked, make the switch and mark that a switch has been done:*/
+                        $rows[$i].parentNode.insertBefore($rows[$i + 1], $rows[$i]);
+                        $switching = true;
+                        //Each time a switch is done, increase this count by 1:
+                        $switchcount++;
+                    }
+                    else
+                    {
+                        /*If no switching has been done AND the direction is "asc", set the direction to "desc" and run the while loop again.*/
+                        if ($switchcount === 0 && $dir == "asc") {
+                            $dir = "desc";
+                            $switching = true;
+                        }
+                    }
+                }
+            }).appendTo(this);
+        }
+
+
+
+        //ommiting first row AKA header
+        else if ($tabRows != 0)
+        {
+
+            //gets all table data and create a new row
+            var $tds1 = $(this).children(),
+                $row1 = $("<td></td>");
+
+            //Grab text from the Tag column and find Tech name
+            var $TechVal1 = $tds1.eq(13).text().toLowerCase(); // converting to lower case
+            var $Tech1 = "***";
+
+		/*	var $Urena = 0;
+			var $Goldberg= 0;
+			var $Joe = 0;
+			var $Mike = 0;
+			var $Bob = 0; */
+
+            //filter for Tech name in tag column
+            if (/vojta/.test($TechVal1) ) {
+                $Tech1 = "vojta";
+                $(this).css("background-color","#faffa8");
+                $countW ++;
+            } else if (/william/.test($TechVal1) ) {
+                $Tech1 = "William";
+                $countT ++;
+                $(this).css("background-color","#ffcfa5");
+            } else if (/dalton/.test($TechVal1) ) {
+                $Tech1 = "Dalton";
+                $countF ++;
+                $(this).css("background-color","#b7d3fb");
+            } else if (/andrew/.test($TechVal1) ) {
+                $Tech1 = "Andrew";
+                $countS ++;
+                $(this).css("background-color","#ACEEB2");
+            } else if (/jeff/.test($TechVal1) ) {
+                $Tech1 = "Jeff";
+                $NocSpec ++;
+                $(this).css("background-color","#FFC0CB");
+				/*
+				#6B5B95
+				#7F4145
+				#3F69AA
+				#D5AE41
+				#766F57
+				*/
+		    } else if (/urena/.test($TechVal1) ) {
+                $Tech1 = "L.Urena";
+                $Urena ++;
+                $(this).css("background-color","#6B5B95");
+            } else if (/goldberg/.test($TechVal1) ) {
+                $Tech1 = "L.Goldberg";
+                $Goldberg ++;
+                $(this).css("background-color","#7F4145");
+            } else if (/joseph/.test($TechVal1) ) {
+                $Tech1 = "Joe";
+                $Joe ++;
+                $(this).css("background-color","#3F69AA");
+            } else if (/mike/.test($TechVal1) ) {
+                $Tech1 = "Mike";
+                $Mike ++;
+                $(this).css("background-color","#D5AE41");
+			} else if (/bob/.test($TechVal1) ) {
+                $Tech1 = "Bob";
+                $Bob ++;
+                $(this).css("background-color","#766F57");
+            }else {
+                $Tech1 = "- none -";
+                $countNONE ++;
+                $(this).css("background-color","#FFFFFF");
+            }
+            if(/expedite/.test($TechVal1) || /Expedite/.test($TechVal1) || /EXPEDITE/.test($TechVal1) || /EXP/.test($TechVal1) || /exp/.test($TechVal1))
+            {
+                $Tech1 = $Tech1 + "EXPEDITE";
+                $(this).css("background-color","#ff0000");
+                $expedite ++;
+            }
+            //for the 4th(aka 3) table data, clone it, and append this to this row
+            $row1.append($Tech1).appendTo(this);
+
+
+        }
+        //get totals
+        $total = $countW + $countT + $countF + $countS + $countNONE + $NocSpec + $Urena + $Goldberg + $Joe + $Mike + $Bob;
+        //increase number of rows
+        $tabRows++;
+    });
+
+				/* colors:
+				#6B5B95
+				#7F4145
+				#3F69AA
+				#D5AE41
+				#766F57
+
+    */
+
+    //SELECTION:
+    var $sortOptions = $("<br><span id='mytotals'><center><select style='width: 1200px; ' id='mySelection"+ $tableName +"' class='vojta' > <option style='text-align:center;' value=''>ALL ("+$total+")</option> <option value='expedite' style='background-color: #ff0000'>EXPEDITE ("+$expedite+")</option>	<option value='Urena' style='background-color:#6B5B95' >Urena ("+$Urena+")</option>	<option value='Goldberg' style='background-color:#7F4145' >Goldberg ("+$Goldberg+")</option> <option value='Joe' style='background-color:#3F69AA' >Joe ("+$Joe+")</option>	<option value='Mike' style='background-color:#D5AE41' >Mike ("+$Mike+")</option><option value='Bob' style='background-color:#766F57' >Bob ("+$Bob+")</option><option value='Vojta' style='background-color:#faffa8' >Vojta ("+$countW+")</option> <option value='William' style='background-color:#ffcfa5'>William ("+$countT+")</option> <option value='Dalton' style='background-color:#b7d3fb'>Dalton ("+$countF+")</option> <option value='Andrew' style='background-color:#ACEEB2'>Andrew ("+$countS+")</option> <option value='none'>None ("+$countNONE+")</option> <option value='Jeff' style='background-color:#FFC0CB'>Jeff ("+$NocSpec+")</option></select></center></span><br>");
+
+
+	//Now add a new table at the bottom with totals for each Tech
+    var $tableX = $("<table style='width: 1200px; '><th id='test'><div style='width: 10px; height: 10px; background: #FFC0CB;'></div>Jeff: "+$NocSpec+"</th><th><div style='width: 10px; height: 10px; background: #ffcfa5;'></div>William: "+$countT+"</th><th><div style='width: 10px; height: 10px; background: #faffa8;'></div>Vojta: "+$countW+"</th><th><div style='width: 10px; height: 10px; background: #b7d3fb;'></div>Dalton: "+$countF+"</th><th><div style='width: 10px; height: 10px; background: #ACEEB2;'></div>Andrew: "+$countS+"</th><th><div style='width: 10px; height: 10px; background: white;'></div>Unassigned: "+$countNONE+"</th><th><div style='width: 10px; height: 10px; background: #ff0000;'></div>Expedite: "+ $expedite +"</th><th><div style='width: 10px; height: 10px; background: #6B5B95;'></div>Urena: "+ $Urena +"</th><th><div style='width: 10px; height: 10px; background: #7F4145;'></div>Goldberg: "+ $Goldberg +"</th><th><div style='width: 10px; height: 10px; background: #3F69AA;'></div>Joe: "+ $Joe +"</th><th><div style='width: 10px; height: 10px; background: #D5AE41;'></div>Mike: "+ $Mike +"</th><th><div style='width: 10px; height: 10px; background: #766F57;'></div>Bob: "+ $Bob +"</th><th colspan='2'><span class='badge'><b>TOTAL: "+$total+"</b></span></th></table>");
+    $("#mycontainer").prepend($tableX);
+    //SORTING OPTIONS PANEL
+
+    //Reset variables
+    $tabRows = $countW = $countF =$countT = $countS = $countNONE = $total= $expedite= $NocSpec = $Urena = $Goldberg = $Joe = $Mike = $Bob =0; //=
+
+	//filter table by input (Tech):
+    $sortOptions.insertBefore("#ctl00_ContentPlaceHolder1_rgTicketListing_ctl00"); //+$tableName
+    //$("<div>HELLO</div>").prepend("#ctl00_ContentPlaceHolder1_rgTicketListing_ctl00");
+
+
+
+    //SORTING:
+
+    $('#mySelection'+ $tableName).on("click", function(){
+        //START FUNCTION
+        var $input = 0;
+        var $filter= 0;
+        var $table= 0;
+        var $tr= 0;
+        var $td= $i=0;
+
+        $input = document.getElementById("mySelection"+ $tableName);
+        $filter = $input.value.toUpperCase();
+        var $tableZ = document.getElementById($tableName);
+        $tr = $tableZ.getElementsByTagName("tr");
+        for (var $i = 0; $i < $tr.length; $i++)
+        {
+            $td = $tr[$i].getElementsByTagName("td")[13]; //changed from 7 to 6
+            if ($td)
+            {
+                if ($td.innerHTML.toUpperCase().indexOf($filter) > -1)
+                {
+                    $tr[$i].style.display = "";
+                }
+                else
+                {
+                    $tr[$i].style.display = "none";
+                }
+            }
+        }
+        //END FUNCTION
+    });
+
+
+
+
+    //>>>>>>>>>>>>>    REPLACE ME WITH CODE BELOW IF YOU WANT SCRIPT TO AUTO-FILTER BY YOUR Tech   <<<<<<<
+
+
+
+    //autoFilter Tech by user logged in.
+
+    /*  var $user=$("#loggedUser").find('h5 span').text();
+   //William
+   if(/burmahl/.test($user) || /alyssa/.test($user) || /mandi/.test($user) || /adrian/.test($user) || /christopher/.test($user) || /bonni/.test($user) || /erin/.test($user) || /david.b/.test($user))
+   {
+       //$selectTech = $user;
+       $("#mySelection"+ $tableName).val("William").click();
+   }
+   //Vojta
+   else if( /vojta/.test($user) || /andy/.test($user) || /james/.test($user) || /marshall/.test($user) || /dave/.test($user) || /cameron/.test($user))
+   {
+       //$selectTech = $user;
+       $("#mySelection"+ $tableName).val("Vojta").click();
+   }
+   //Dalton
+   else if( /jack/.test($user) || /daniel/.test($user) || /jimmy/.test($user))
+   {
+       //$selectTech = $user;
+       $("#mySelection"+ $tableName).val("Dalton").click();
+   }
+   //Andrew
+   else if( /rsterns/.test($user))
+   {
+       //$selectTech = $user;
+       $("#mySelection"+ $tableName).val("Andrew").click();
+   }
+   else{}*/
+
+
+
+}
+//autosort all tables by step name!
+
+
+
+
+
+    //EXECUTE:
+
+    setRows("ctl00_ContentPlaceHolder1_rgTicketListing_ctl00");
+           //ctl00_ContentPlaceHolder1_rgTicketListing_ctl00
+
+});
+
+
+
+//EXTRA:
+
+
+
+function OrderByTech()
+{
+    $( "button[name*='ctl00$ContentPlaceHolder1$rgTicketListing$ctl00$ctl02$ctl00$ctl13']" ).click();
+	//$("ctl00$ContentPlaceHolder1$rgTicketListing$ctl00$ctl02$ctl00$ctl13").addClass("headerSortDown").click(); //step header headerSortDown
+}
+
+
+
+//OrderByStep();
+$(document).ready(function()
+{
+    //autosort all tables by Tech
+    function OrderByTech()
+    {
+        //$("th:contains('Deadline')").css( "color", "red" );
+        $("th:contains('Deadline')").removeClass("sorting_asc").addClass("sorting").removeAttr("aria-sort");
+        $("th.Tech").addClass("sorting_asc"); //step header headerSortDown
+        $("th.Tech").attr({"aria-sort": "ascending","tabindex":"0","aria-controls":"workflowSteps", "rowspan":"1" , "colspan":"1", "aria-label":"Tech: activate to sort column descending"});
+        //$("th:contains('Deadline')").css( "color", "blue" );
+    }
+
+    setTimeout(function(){
+        window.location.reload(1);
+    }, 60000);
+
+    //refreshes page every 60 sec
+    setTimeout();
+
+    //order by tech
+    OrderByTech();
+    $("th:contains('Tech')").on("click", function(){
+        $("th:contains('Deadline')").css( "color", "red" );
+        alert("TEST");
+        $("th:contains('Deadline')").removeClass("sorting_asc").addClass("sorting").removeAttr("aria-sort");
+        $("th.Tech").addClass("sorting_asc"); //step header headerSortDown
+        $("th.Tech").attr({"aria-sort": "ascending","tabindex":"0","aria-controls":"workflowSteps", "rowspan":"1" , "colspan":"1", "aria-label":"Tech: activate to sort column descending"});
+        sortTable(2);
+    });
+    function sortTable(n) {
+        var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+        table = document.getElementById("workflowSteps");
+        switching = true;
+        //Set the sorting direction to ascending:
+        dir = "asc";
+        /*Make a loop that will continue until
+  no switching has been done:*/
+        while (switching) {
+            //start by saying: no switching is done:
+            switching = false;
+            rows = table.getElementsByTagName("TR");
+            /*Loop through all table rows (except the
+    first, which contains table headers):*/
+            for (i = 1; i < (rows.length - 1); i++) {
+                //start by saying there should be no switching:
+                shouldSwitch = false;
+                /*Get the two elements you want to compare,
+      one from current row and one from the next:*/
+                x = rows[i].getElementsByTagName("TD")[n];
+                y = rows[i + 1].getElementsByTagName("TD")[n];
+                /*check if the two rows should switch place,
+      based on the direction, asc or desc:*/
+                if (dir == "asc") {
+                    if (x.textContent.toLowerCase() > y.textContent.toLowerCase()) {
+                        //if so, mark as a switch and break the loop:
+                        shouldSwitch= true;
+                        break;
+                    }
+                } else if (dir == "desc") {
+                    if (x.textContent.toLowerCase() < y.textContent.toLowerCase()) {
+                        //if so, mark as a switch and break the loop:
+                        shouldSwitch= true;
+                        break;
+                    }
+                }
+            }
+            if (shouldSwitch) {
+                /*If a switch has been marked, make the switch
+      and mark that a switch has been done:*/
+                rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                switching = true;
+                //Each time a switch is done, increase this count by 1:
+                switchcount ++;
+            } else {
+                /*If no switching has been done AND the direction is "asc",
+      set the direction to "desc" and run the while loop again.*/
+                if (switchcount == 0 && dir == "asc") {
+                    dir = "desc";
+                    switching = true;
+                }
+            }
+        }
+    }
+});
+//runs function against each even row
+//$("*").css('background-color', "'" + LightenDarkenColor($(this).css('background-color')) + "'"); //LightenDarkenColor()
+//editing the TAG column
+/*$(document).ready(function()
+{
+     $("tr").each(function(){
+            var tds = $(this).children().eq(3);
+            var TechVal = tds.text().toLowerCase(); // converting to lower case
+            //filter for Tech name in tag column
+            if (/Vojta/.test(TechVal) ) {
+                tds.text("Vojta");
+            } else if (/William/.test(TechVal) ) {
+                tds.text("William");
+            } else if (/Dalton/.test(TechVal)  ) {
+                tds.text("Dalton");
+            } else if (/Andrew/.test(TechVal)  ) {
+                tds.text("Andrew");
+            } else if (/Jeff/.test(TechVal) ) {
+                tds.text("Jeff");
+            }else {
+                tds.text("");
+            }
+            if(/expedite/.test(TechVal) || /Expedite/.test(TechVal) || /EXPEDITE/.test(TechVal) || /EXP/.test(TechVal) || /exp/.test(TechVal))
+            {
+                tds.text(TechVal+"EXPEDITE");
+            }
+     });
+});*/
+//NEW FUNCTIONS! ******************************************************************************
+$(document).ready(function()
+{
+    //works
+    //rgb2hex("rgb(255, 129, 26)")
+    //LightenDarkenColor("#F06D06", 20) //rgb(255, 129, 26)
+    //$('#harlem').css('background-color')
+    //number rows initially
+    numberRows("mySelectionfutureWorkflowSteps");
+    numberRows("mySelectiondueWorkflowSteps");
+
+	//FILTER BY TECH
+	$("#Techs").click();
+
+    //hover color
+    var OG_color = "";
+    $("tr").hover(
+    function(){
+        //set og color to the current color (before hover)
+        OG_color = $(this).css("background-color");
+        $(this).css("background-color", "##CACFD2"); },
+    function(){
+        $(this).css("background-color", OG_color);
+    });
+    //changing when dropdown is changed.
+    $("#mySelectiondueWorkflowSteps").on("change", function(){
+        numberRows($(this).attr('id'));
+    });
+    //changing when dropdown is changed.
+    $("#mySelectionfutureWorkflowSteps").on("change", function(){
+        numberRows($(this).attr('id'));
+    });
+    //clicking headers
+     $("th").on("click", function(){
+        numberRows($(this).attr('id'));
+    });
+        // NUMBER ROWS (cant see rows while reloading..)
+        function numberRows(tableID)
+         {
+            var numberME=1;
+            $(document).ready(function()
+            {
+                /*$("td:visible:first-child").each( function(){
+                    var myTextInput = "";
+                    var removeNUMBER = $(this).text();
+                    //var color = $(this).css("background-color");
+                    removeNUMBER = removeNUMBER.replace(/^(\d)*\.\s/g, "");
+                    myTextInput = numberME + ". " + removeNUMBER;
+                    numberME++;
+                    $(this).html("<span class='badge'>" + myTextInput +"</span>");
+                });*/
+                //alert(tableID);
+                if( $("#"+tableID).val() == "" )
+                {
+                   //do nothing;
+                   reColorRows();
+                }
+                //stripe my rows
+                else
+                {
+                    reColorRows();
+                    tableID = tableID.replace("mySelection", "");
+                    $("#"+ tableID +" tr:visible:even").each( function(){
+                        /*var myTextInput = "";
+                    var removeNUMBER = $(this).text();
+                    var color = $(this).css("background-color");
+                    removeNUMBER = removeNUMBER.replace(/^(\d)*\.\s/g, "");
+                    myTextInput = numberME + ". " + removeNUMBER;
+                    numberME++;
+                    $(this).html("<span class='badge'>" + myTextInput + " color: " + color +"</span>");*/
+                        //this.change_my_color("#harlem");
+                        change_my_color($(this));
+                        //this.css("background-color", change_my_color(   $("#harlem")   ));  //LightenDarkenColor(rgb2hex($(this).css("background-color")), 20)
+                    });
+                }
+            });
+        }
+    //RECOLOR ROWS (OG COLORS) *WORKS*
+    function reColorRows()
+    {
+             $("tr").each(function(){
+            var $tds = $(this).children();
+            var $TechVal = $tds.eq(3).text().toLowerCase(); // converting to lower case
+            var $Tech = "***";
+            //filter for Tech name in tag column
+            if (/Vojta/.test($TechVal) ) {
+                $Tech = "Vojta";
+                $(this).css("background-color","#faffa8");
+                $countW ++;
+            } else if (/William/.test($TechVal) ) {
+                $Tech = "William";
+                $countT ++;
+                $(this).css("background-color","#ffcfa5");
+            } else if (/Dalton/.test($TechVal) ) {
+                $Tech = "Dalton";
+                $countF ++;
+                $(this).css("background-color","#b7d3fb");
+            } else if (/Andrew/.test($TechVal) ) {
+                $Tech = "Andrew";
+                $countS ++;
+                $(this).css("background-color","#ACEEB2");
+            } else if (/Jeff/.test($TechVal) ) {
+                $Tech = "Jeff";
+                $NocSpec ++;
+                $(this).css("background-color","#FFC0CB");
+            }else {
+                $Tech = "none";
+                $countNONE ++;
+                $(this).css("background-color","#FFFFFF"); //white
+            }
+            if(/expedite/.test($TechVal) || /Expedite/.test($TechVal) || /EXPEDITE/.test($TechVal) || /EXP/.test($TechVal) || /exp/.test($TechVal))
+            {
+                $Tech = $Tech + "EXPEDITE";
+                $(this).css("background-color","#ff0000");
+                $expedite ++;
+            }
+         });
+    }
+    //NOT USED... finds background color of element and returns it via alert()
+    function find_background_color()
+    {
+        $(document).ready(function()
+        {
+            var back_color ="";
+            back_color = $("tr:visible:nth-of-type(2)").css("background-color");
+            var html = $("tr:visible:nth-of-type(2)").html();
+            alert("Background color is: " + back_color + " HTML is: " + html);
+        });
+    }
+    //Function to convert hex format to a rgb color
+    function rgb2hex(rgb){
+        rgb = rgb.match(/^rgba?[\s+]?\([\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?/i);
+        return (rgb && rgb.length === 4) ? "#" +
+            ("0" + parseInt(rgb[1],10).toString(16)).slice(-2) +
+            ("0" + parseInt(rgb[2],10).toString(16)).slice(-2) +
+            ("0" + parseInt(rgb[3],10).toString(16)).slice(-2) : '';
+    }
+    //lighten color
+    function LightenDarkenColor(col, amt) {
+        var usePound = false;
+        if (col[0] == "#") {
+            col = col.slice(1);
+            usePound = true;
+        }
+        var num = parseInt(col,16);
+        var r = (num >> 16) + amt;
+        if (r > 255) r = 255;
+        else if (r < 0) r = 0;
+        var b = ((num >> 8) & 0x00FF) + amt;
+        if (b > 255) b = 255;
+        else if (b < 0) b = 0;
+        var g = (num & 0x0000FF) + amt;
+        if (g > 255) g = 255;
+        else if (g < 0) g = 0;
+        return (usePound?"#":"") + (g | (b << 8) | (r << 16)).toString(16);
+    }
+    //change my color
+    function change_my_color(x)
+    {
+        //gets current color and makes it lighter / darker.
+        var color = rgb2hex(x.css("background-color"));
+        color = color.toString();
+        console.log(color);
+        //if white
+        if((color) == ("#FFFFFF" || "#ffffff" || "undefined"))
+        {
+            color="#f0f0f0";
+        }
+        else
+        {
+            color = LightenDarkenColor(color, 30);
+        }
+        console.log(color);
+        //if blackish
+        if((color) == ("#1E1E1E" || "1E1E1E" || "#1e1e1e" || "#000000" || "#ffffff"))
+        {
+            color="#f0f0f0";
+        }
+        //sets it to the new color lighter / darker color.
+        x.css("background-color", color);
+    }
+
+
+    //TIMER:
+    // Set the date we're counting down to
+    var countDownDate = new Date("Jan 5, 2019 15:37:25").getTime();
+
+    // Update the count down every 1 second
+    var x = setInterval(function() {
+
+  // Get todays date and time
+  var now = new Date().getTime();
+
+  // Find the distance between now and the count down date
+  var distance = countDownDate - now;
+
+  // Time calculations for days, hours, minutes and seconds
+  var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+  // Display the result in the element with id="demo"
+  document.getElementById("demo").innerHTML = days + "d " + hours + "h "
+  + minutes + "m " + seconds + "s ";
+
+  // If the count down is finished, write some text
+  if (distance < 0) {
+      clearInterval(x);
+      document.getElementById("demo").innerHTML = "EXPIRED";
+  }
+    }, 1000);
+});
+
+//ADDING TIME:
+function AddMinutesToDate(date, minutes) {
+    return new Date(date.getTime() + minutes*60000);
+}
+
+
