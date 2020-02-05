@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Group Tickets
 // @namespace    http://tampermonkey.net/
-// @version      2.00
+// @version      2.0
 // @description  Added Nick.. ADDING EXCEL DOC Adds a column for Tech name and sorts rows by Tech, V3 fixing broken search by downgrading all code to old JQuery version that is compatible with that search, also fixed CAP Tech names. Adding Tech Andrew and removing auto select.., Adding EXPEDITE Tech, adding NOC SPEC Tech (v.8)
 // @author       Vojta Ripa
 // @include      *illuminate.firstlight.systems/illuminate/ticketing/listing*
@@ -44,7 +44,8 @@ new array 11-26-2019
 for converter user:
 https://shancarter.github.io/mr-data-converter/
 
-
+2.0
+updated few buisnesses and SLAs
 
 */
 
